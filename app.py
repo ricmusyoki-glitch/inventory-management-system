@@ -105,6 +105,36 @@ def get_product(barcode):
         "ingredients": product.get("ingredients_text")
     })
 
+@app.route("/inventory/from-api/<barcode>", methods=["POST"])
+def add_product_from_api(barcode):
+
+    url = f"https://world.openfoodfacts.org/api/v0/product/{barcode}.json"
+
+    headers = {
+        "User-Agent": "InventoryManagementSystem/1.0"
+    }
+
+    response = requests.get(url, headers=headers)
+    data = response.json()
+
+    if data["status"] == 0:
+        return jsonify({
+            "error": "Product not found"
+        }), 404
+
+    product = data["product"]
+
+    new_item = {
+        "id": len(inventory) + 1,
+        "name": product.get("product_name", "Unknown Product"),
+        "price": 0,
+        "quantity": 0
+    }
+
+    inventory.append(new_item)
+
+    return jsonify(new_item), 201
+
 
 if __name__ == "__main__":
     app.run(debug=True)
